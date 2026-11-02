@@ -381,6 +381,35 @@ def generate_pdf_slides(output_pdf=None):
     )
     elements.append(PageBreak())
 
+    elements.append(Paragraph("TRY THESE", badge_style))
+    elements.append(Paragraph("Algorithm sketch", title_style))
+    sketch_text = (
+        "INPUT: pack / representation, T schedule<br/>"
+        "OUTPUT: best legal low-cost pack<br/>"
+        "cost ← 1000·¬legal + deadspace + α·HPWL<br/>"
+        "propose neighbor (swap/move/perturb)<br/>"
+        "accept if Δ&lt;0 or rand &lt; e^(−Δ/T)<br/>"
+        "keep best; cool T<br/>"
+        "GOLDEN legal cost≈36; bad≈1044"
+    )
+    elements.append(
+        Table(
+            [[Paragraph(sketch_text, code_style)]],
+            colWidths=[672],
+            style=[("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(CARD)), ("PADDING", (0, 0), (-1, -1), 12)],
+        )
+    )
+    elements.append(Spacer(1, 10))
+    elements.append(
+        Paragraph(
+            "Try: (1) start from the overflow seed and read cost ≈ 1044. "
+            "(2) saSwap E into the empty pocket — legality true, cost ≈ 36. "
+            "(3) worsening moves only with e^(−ΔC/T); rescore after every swap; do not quench.",
+            body_style,
+        )
+    )
+    elements.append(PageBreak())
+
     elements.append(Paragraph("STATE TRANSITION", badge_style))
     elements.append(Paragraph("Bad Seed vs. Golden Packing", title_style))
     img1 = RLImage(str(frame_bad), width=320, height=240)

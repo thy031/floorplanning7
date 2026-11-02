@@ -614,6 +614,19 @@ span.btn.is-disabled {
   color: var(--ink);
 }
 .lab-steps li { margin: 0.35rem 0; }
+.algo-sketch { margin: 0 0 1.75rem; }
+.algo-sketch .gold {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  background: var(--ok-bg);
+  border: 1px solid #b7dfc6;
+  color: var(--ok);
+  border-radius: 10px;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
 
 .placeholder-panel {
   background: var(--surface);

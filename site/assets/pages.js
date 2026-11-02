@@ -373,6 +373,28 @@
           </div>
         </section>
 
+        ${
+          slug === "simulated-annealing-fp"
+            ? `<section class="algo-sketch" id="sketch" aria-label="Algorithm sketch">
+          <h2>Algorithm sketch — try these</h2>
+          <p class="lead">Same contract as the clip. Walk it on the <strong>Interactive lab</strong> tab after you watch.</p>
+          <pre class="gold">INPUT: pack / representation, T schedule
+OUTPUT: best legal low-cost pack
+cost ← 1000·¬legal + deadspace + α·HPWL
+propose neighbor (swap/move/perturb)
+accept if Δ&lt;0 or rand &lt; e^(−Δ/T)
+keep best; cool T
+GOLDEN legal cost≈36; bad≈1044</pre>
+          <ol class="lab-steps">
+            <li>Open <strong>Interactive lab</strong>. Messy start: E spills, cost ≈ 1,044, legality false.</li>
+            <li>Do one saSwap: click E, then the dashed pocket (or Magic swap). Cost should drop to ≈ 36 and legality to true.</li>
+            <li>Accept improving moves immediately. Accept a worsening move only with P = e^(−ΔC/T) while T is still hot.</li>
+            <li>Flip the three mistake switches one at a time: no +1,000 tax, stale score after a swap, cooling too fast (quenching).</li>
+          </ol>
+        </section>`
+            : ""
+        }
+
         <h2>What to do</h2>
         <ol class="lab-steps">
           ${
