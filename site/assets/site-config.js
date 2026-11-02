@@ -20,10 +20,10 @@ window.SITE_CONFIG = {
   mediaBranch: "main",
   mediaCdn: "jsdelivr",
   /**
-   * "auto" — local course-media on localhost, CDN elsewhere
-   * "local" — always /course-media/<courseId>/…
-   * "cdn" — always jsDelivr/raw (monorepo paths)
+   * "auto" — localhost / GitHub Pages use this repo's course-media/; else CDN
+   * "local" — always course-media next to the site (this standalone lab)
+   * "cdn" — always jsDelivr/raw (eda-learning monorepo)
    */
-  mediaSource: "auto",
+  mediaSource: "local",
   progressKey: "eda.progress.v1",
 };

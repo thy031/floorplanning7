@@ -76,9 +76,11 @@
     const mode = String(cfg.mediaSource || "cdn").toLowerCase();
     if (mode === "local") return true;
     if (mode === "cdn") return false;
-    // "auto": localhost only — falls back to CDN if course-media is missing
+    // "auto": this folder's course-media on localhost and GitHub Pages
     const h = (location && location.hostname) || "";
-    return h === "localhost" || h === "127.0.0.1" || h === "[::1]";
+    if (h === "localhost" || h === "127.0.0.1" || h === "[::1]") return true;
+    if (/\.github\.io$/i.test(h)) return true;
+    return false;
   }
 
   function cdnFileUrl(cfg, org, repo, branch, pathParts, file) {
@@ -143,6 +145,7 @@
       videoFallbacks: video.fallbacks,
       videoShort: videoShort.primary,
       videoFull: videoFull.primary,
+      videoLocalFallbacks: [video.primary, fileUrls("sa-en.mp4").primary].filter(Boolean),
       captions: {
         short: {
           en: capFile("sa-short-en.vtt"),
@@ -366,7 +369,7 @@
               : ""
           }
           <div class="video-wrap">
-            <video controls preload="metadata" playsinline data-video-primary="${escape(slug === "simulated-annealing-fp" ? media.videoShort : media.video)}" data-video-fallbacks="${escape((media.videoFallbacks || []).join("|"))}" data-clip-short="${escape(media.videoShort || "")}" data-clip-full="${escape(media.videoFull || "")}" data-cap-short-en="${escape(media.captions.short.en)}" data-cap-short-zh="${escape(media.captions.short.zh)}" data-cap-short-bi="${escape(media.captions.short.bi)}" data-cap-full-en="${escape(media.captions.full.en)}" data-cap-full-zh="${escape(media.captions.full.zh)}" data-cap-full-bi="${escape(media.captions.full.bi)}">
+            <video controls preload="metadata" playsinline data-video-primary="${escape(slug === "simulated-annealing-fp" ? media.videoShort : media.video)}" data-video-fallbacks="${escape((slug === "simulated-annealing-fp" ? media.videoLocalFallbacks : media.videoFallbacks || []).join("|"))}" data-clip-short="${escape(media.videoShort || "")}" data-clip-full="${escape(media.videoFull || "")}" data-cap-short-en="${escape(media.captions.short.en)}" data-cap-short-zh="${escape(media.captions.short.zh)}" data-cap-short-bi="${escape(media.captions.short.bi)}" data-cap-full-en="${escape(media.captions.full.en)}" data-cap-full-zh="${escape(media.captions.full.zh)}" data-cap-full-bi="${escape(media.captions.full.bi)}">
               <source src="${escape(slug === "simulated-annealing-fp" ? media.videoShort : media.video)}" type="video/mp4">
               ${slug === "simulated-annealing-fp" ? saTracks("short") : ""}
             </video>
@@ -434,8 +437,10 @@ GOLDEN legal cost≈36; bad≈1044</pre>
         <div class="sa-tab-panel" data-sa-panel="notes" hidden>
           <h2>Course notes</h2>
           <p class="lead">Slide deck generated with the explainer video. Use the Lab tab for the voiced walkthrough.</p>
-          <p><a class="btn btn-secondary" href="${escape(media.slidesPdf)}" download>Download PDF</a></p>
-          <iframe class="notes-embed" title="Simulated annealing course notes PDF" src="${escape(media.slidesPdf)}"></iframe>
+          <p>
+            <a class="btn btn-secondary" href="${escape(media.slidesPdf)}" target="_blank" rel="noopener">Open PDF</a>
+          </p>
+          <iframe class="notes-embed" title="Simulated annealing course notes PDF" src="about:blank" data-notes-src="${escape(media.slidesPdf)}"></iframe>
         </div>`
             : ""
         }
@@ -489,7 +494,15 @@ GOLDEN legal cost≈36; bad≈1044</pre>
         video.load();
         return;
       }
-      if (panel) panel.hidden = true;
+      if (!panel) return;
+      let hint = panel.querySelector("[data-video-error]");
+      if (!hint) {
+        hint = document.createElement("p");
+        hint.className = "lead";
+        hint.setAttribute("data-video-error", "");
+        panel.appendChild(hint);
+      }
+      hint.textContent = "Video file did not load. On GitHub Pages, add a .nojekyll file and push the mp4 under site/course-media/.";
     });
   }
 
@@ -506,6 +519,11 @@ GOLDEN legal cost≈36; bad≈1044</pre>
       panels.forEach((panel) => {
         panel.hidden = panel.getAttribute("data-sa-panel") !== key;
       });
+      if (key === "notes") {
+        const frame = root.querySelector("[data-notes-src]");
+        const src = frame && frame.getAttribute("data-notes-src");
+        if (frame && src && frame.getAttribute("src") !== src) frame.src = src;
+      }
       if (id === "quiz") {
         const quiz = root.querySelector("#quiz");
         if (quiz) quiz.scrollIntoView({ behavior: "smooth", block: "start" });
