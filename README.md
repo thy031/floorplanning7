@@ -24,9 +24,13 @@ cd floorplanning_l7
 python3 serve.py 8777
 ```
 
-Open [http://127.0.0.1:8777/courses/learn_floorplanning/labs/simulated-annealing-fp/index.html](http://127.0.0.1:8777/courses/learn_floorplanning/labs/simulated-annealing-fp/index.html).
+Open [http://127.0.0.1:8777/](http://127.0.0.1:8777/) (redirects to the lab) or the lab URL directly:
 
-`serve.py` publishes `site/` on port **8777**. Plain `python3 -m http.server` from `site/` also works; use `serve.py` so WebVTT captions get the right MIME type.
+[http://127.0.0.1:8777/courses/learn_floorplanning/labs/simulated-annealing-fp/index.html](http://127.0.0.1:8777/courses/learn_floorplanning/labs/simulated-annealing-fp/index.html).
+
+`serve.py` publishes **`site/`** on port **8777**. The real page is `site/courses/learn_floorplanning/labs/simulated-annealing-fp/index.html`: a thin shell that `pages.js` fills from `catalog.json`, Anneal-O, quiz, and `course-media/`. The root `index.html` in this folder only exists so GitHub Pages / a folder deploy has an entry point; it redirects into `site/`.
+
+Plain `python3 -m http.server` from `site/` also works; use `serve.py` so WebVTT captions get the right MIME type.
 
 Standalone tool (same Anneal-O board): [http://127.0.0.1:8777/tools/simulated-annealing-fp/index.html](http://127.0.0.1:8777/tools/simulated-annealing-fp/index.html).
 
