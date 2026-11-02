@@ -1,0 +1,79 @@
+{
+  "module": "module03-01-simulated-annealing-fp",
+  "title": "Simulated annealing floorplan search check",
+  "passing_score": 0.67,
+  "items": [
+    {
+      "id": "q1",
+      "type": "true_false",
+      "prompt": "The toy cost model adds a 1,000-point penalty tax whenever a packing is illegal (overlap or overflow).",
+      "answer": true,
+      "explain": "Both clips: illegality is taxed at +1,000. That term dominates the bad overflow seed (~1,044)."
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": "On the starter energy landscape, the bad overflow seed vs the golden legal packing sit near which costs?",
+      "choices": [
+        "Bad ≈ 36, golden ≈ 1,044",
+        "Bad ≈ 1,044, golden ≈ 36",
+        "Both ≈ 1,000",
+        "Both ≈ 12.5"
+      ],
+      "answer": 1,
+      "explain": "Bad seed ≈ 1,044 (mostly the +1,000 tax). Golden drops below the penalty floor to about 36 (deadspace + a small HPWL proxy)."
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": "In the execution loop, saSwap proposes a neighbor by…",
+      "choices": [
+        "Deleting a module that overflows",
+        "Exchanging two modules’ origin coordinates while keeping their sizes fixed",
+        "Reshaping every module from 3×2 to 2×3",
+        "Changing the chip outline to 20×20"
+      ],
+      "answer": 1,
+      "explain": "The clip: saSwap exchanges module origin (lower-left) coordinates; dimensions stay fixed. Soft-module reshape is the next lab."
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": "Under the Metropolis criterion at high temperature T, a worsening move (ΔC > 0) is accepted…",
+      "choices": [
+        "Never — only improving moves are legal",
+        "Always — temperature does not matter",
+        "With probability P = e^(−ΔC / T)",
+        "Only after T has already reached T_min"
+      ],
+      "answer": 2,
+      "explain": "High T: P = e^(−ΔC / T) lets the search escape bad local seeds. Improving moves (ΔC ≤ 0) are accepted immediately."
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": "The clip says annealing is only as good as its…",
+      "choices": [
+        "random seed",
+        "chip outline size",
+        "move set (and representation)",
+        "quiz score"
+      ],
+      "answer": 2,
+      "explain": "Short clip: simple coordinate swapping is a starting point; pairing SA with B*-trees, sequence pairs, or soft-module edits unlocks real flexibility."
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": "Which implementation trap is called quenching?",
+      "choices": [
+        "Pairing annealing with a B*-tree so overlap is zero by construction",
+        "Rescoring cost immediately after every saSwap",
+        "Cooling T so fast that the search never escapes the initial bad seed",
+        "Accepting ΔC ≤ 0 moves at high temperature"
+      ],
+      "answer": 2,
+      "explain": "Both clips list three traps: no legality penalty, forgetting to rescore after a swap, and cooling too fast (quenching)."
+    }
+  ]
+}

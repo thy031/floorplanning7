@@ -1,0 +1,156 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:04.456
+Imagine trying to pack heavy wooden blocks into a display box in complete darkness.
+想象在全黑里把沉重木块塞进展示盒。
+
+2
+00:00:04.456 --> 00:00:12.152
+If a single block spills over the edge or overlaps another, a strict referee hits you with a massive 1,000-point penalty fine.
+只要有一块溢出边缘或与另一块重叠，严厉的裁判就罚你 1000 分。
+
+3
+00:00:12.152 --> 00:00:16.000
+That is the core challenge of simulated annealing floorplan search.
+这就是模拟退火布局规划搜索的核心挑战。
+
+4
+00:00:16.000 --> 00:00:27.500
+In physical chip layout design, simulated annealing (SA) optimizes module placement by balancing spatial metrics while strictly outlawing illegal overlaps or boundary spills.
+在芯片物理设计里，模拟退火（SA）优化模块放置：平衡空间指标，同时严格禁止非法重叠或越界溢出。
+
+5
+00:00:27.500 --> 00:00:39.750
+Under our cost model, a messy initial overflow seed sits at an unbearable cost near 1,044, whereas a golden legal packing drops down to just 36.
+按我们的代价模型，凌乱的初始溢出种子代价高得难受，约 1044；黄金合法解则落到只有 36。
+
+6
+00:00:39.750 --> 00:00:47.000
+Simulated annealing naturally guides us out of that high-penalty chaos toward legal, low-cost layout perfection.
+模拟退火自然把我们带出高罚金混乱，走向合法、低代价的布局。
+
+7
+00:00:47.000 --> 00:01:03.000
+To separate great floorplans from bad ones, the algorithm relies on a clear composite cost function: cost = C_deadspace + C_HPWL + C_legality This function heavily penalizes any illegality.
+要把好的布局规划和坏的分开，算法靠一个清楚的合成代价：cost = C_deadspace + C_HPWL + C_legality。任何非法性都重罚。
+
+8
+00:01:03.000 --> 00:01:11.652
+In our pseudocode workflow, we start with an initial placement S0, a high starting temperature T0, and a steady cooling rate alpha.
+伪代码流程里，我们从初始放置 S0、很高的起始温度 T0、稳定的降温率 alpha 出发。
+
+9
+00:01:11.652 --> 00:01:26.596
+As long as temperature T stays above T_min, the algorithm explores neighboring layouts using saSwap, computes ΔC = cost(S_candidate) − cost(S_current), and tests the Metropolis acceptance rule.
+只要温度 T 高于 T_min，算法就用 saSwap 探索邻域布局，计算 ΔC = cost(S_candidate) − cost(S_current)，并做 Metropolis 接受检验。
+
+10
+00:01:26.596 --> 00:01:34.067
+If a candidate placement is accepted and proves to be legal and lower in cost than S_best, we update S_best.
+若候选被接受、且合法、且比 S_best 更低代价，就更新 S_best。
+
+11
+00:01:34.067 --> 00:01:38.000
+Then we cool down with T = T × alpha.
+然后 T = T × alpha 降温。
+
+12
+00:01:38.000 --> 00:01:41.421
+Let’s look at our two benchmark states side by side.
+并排看两个基准状态。
+
+13
+00:01:41.421 --> 00:01:59.439
+On one side sits the bad overflow seed, marked false for legality due to overlapping modules and boundary spills, triggering that brutal +1,000 penalty tax on top of a deadspace + HPWL score of about 44, bringing total cost to approximately 1,044.
+一侧是溢出坏种子：合法性为 false，模块重叠、越界溢出，在约 44 的空白 + 半周长线长之上再加残酷的 +1000 罚金，总代价约 1044。
+
+14
+00:01:59.439 --> 00:02:10.386
+On the other side sits our golden legal packing, marked true for legality, paying a penalty tax of 0, and keeping deadspace + HPWL down to about 36.
+另一侧是黄金合法解：合法性为 true，罚金为 0，空白 + 半周长线长约 36。
+
+15
+00:02:10.386 --> 00:02:17.000
+With just one smart teaching step, we swap out the chaotic seed for the golden legal packing.
+只要一步教学改进，就能把混乱种子换成黄金合法解。
+
+16
+00:02:17.000 --> 00:02:24.272
+Examining our three cost terms in detail: C_deadspace measures wasted empty room inside the bounding box:
+三项代价细看：C_deadspace 量包围盒里浪费的空房间；
+
+17
+00:02:24.272 --> 00:02:28.963
+C_HPWL acts as a half-perimeter wirelength proxy measuring routing distance
+C_HPWL 是半周长线长代理，量布线距离；
+
+18
+00:02:28.963 --> 00:02:36.000
+and C_legality slams down a +1,000 tax the moment an overlap or overflow occurs.
+一旦重叠或溢出，C_legality 立刻砸下 +1000 税。
+
+19
+00:02:36.000 --> 00:02:45.000
+Phase 1 opens at the bad overflow seed with a score of 1,044.4, dominated by the +1,000 penalty.
+阶段一从溢出坏种子打开，分数 1044.4，被 +1000 罚金主导。
+
+20
+00:02:45.000 --> 00:02:57.107
+In phase 2, we trigger our perturbation move engine, saSwap, which selects two modules at random and exchanges their lower-left (x, y) origin coordinates, while keeping their dimensions fixed.
+阶段二开动扰动动作引擎 saSwap：随机选两个模块，交换它们的左下角 (x, y) 原点，尺寸保持不变。
+
+21
+00:02:57.107 --> 00:03:07.013
+Under the Metropolis rule, helpful moves with ΔC ≤ 0 are accepted immediately, whereas worsening moves with ΔC > 0 are accepted with probability P_accept = e^(-Δ C / T).
+Metropolis 规则下，ΔC ≤ 0 的有益动作立刻接受；ΔC > 0 的变差动作以概率 P_accept = e^(-ΔC / T) 接受。
+
+22
+00:03:07.013 --> 00:03:20.000
+High temperatures give the algorithm freedom to escape bad seeds early on, while lower temperatures cool the solution into an optimal local minimum.
+高温让算法早期能逃出坏种子；低温则把解冷却进更好的局部极小。
+
+23
+00:03:20.000 --> 00:03:26.517
+In phase 3, executing saSwap on the conflicting modules removes the +1,000 penalty tax.
+阶段三对冲突模块执行 saSwap，去掉 +1000 罚金。
+
+24
+00:03:26.517 --> 00:03:40.000
+Total cost falls below 1,000 to 35.7, reflecting deadspace and an HPWL proxy of 12.5, and legality flips to true, which is exactly what a cooling schedule should prefer.
+总代价落到 1000 以下，约 35.7，对应空白和半周长线长代理 12.5，合法性翻成 true——降温日程就该偏好这个。
+
+25
+00:03:40.000 --> 00:03:48.936
+Of course, an annealing search is only as effective as the quality of its move set and spatial representation.
+当然，退火搜索只和动作集、空间表示一样强。
+
+26
+00:03:48.936 --> 00:04:04.000
+While origin-coordinate swapping provides a simple baseline, production floorplanners pair annealing with B*-tree or sequence-pair representations to guarantee zero overlap by construction, alongside soft-module sizing and macro placement in the labs that follow.
+原点坐标交换只是简单基线；生产级布局器把模拟退火配上 B*-树或序列对，从构造上保证零重叠，后面的实验还会加软模块尺寸和宏模块放置。
+
+27
+00:04:04.000 --> 00:04:12.092
+Be careful to avoid three critical implementation pitfalls: accepting illegal states without applying the +1,000 penalty tax:
+实现时避开三个关键陷阱：接受非法状态却不加 +1000 罚金；
+
+28
+00:04:12.092 --> 00:04:18.920
+forgetting to rescore and re-evaluate cost(S_candidate) immediately after an saSwap move
+saSwap 之后忘记立刻重算 cost(S_candidate)；
+
+29
+00:04:18.920 --> 00:04:26.000
+cooling temperature T too rapidly (quenching), which traps the algorithm inside the initial bad seed.
+温度 T 降得太快（淬火），把算法困在最初的坏种子里。
+
+30
+00:04:26.000 --> 00:04:36.941
+Demonstrate one improve step transitioning the layout from the bad overflow seed to the golden legal packing, bringing total cost below 1,000 and restoring legality to true.
+演示一次改进步：从溢出坏种子走到黄金合法解，总代价低于 1000，合法性回到 true。
+
+31
+00:04:36.941 --> 00:04:45.650
+Next, we will extend our move set to include soft-module reshaping, flexing soft module A from a 3×2 to a 2×3 layout.
+下一步扩展动作集：软模块变形，把软模块 A 从 3×2 掰成 2×3。

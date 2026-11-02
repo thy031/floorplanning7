@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulated annealing — bilingual captions</title>
+  <style>
+    :root {
+      --bg: #f3efe6;
+      --ink: #1c2421;
+      --muted: #5c675f;
+      --surface: #fffdf8;
+      --surface2: #efe8db;
+      --shadow: 0 10px 30px rgba(28, 36, 33, 0.06);
+      --font: "Segoe UI", "Source Sans 3", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0 auto;
+      max-width: 980px;
+      padding: 1.25rem 1.25rem 3rem;
+      font-family: var(--font);
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.55;
+    }
+    h1 { font-size: 1.45rem; margin: 0 0 .35rem; }
+    .lead { color: var(--muted); margin: 0 0 1rem; }
+    .lang-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem 1.25rem;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: .75rem;
+    }
+    .row-label { margin: 0; font-size: .92rem; color: var(--muted); }
+    .page-tabs {
+      display: flex;
+      gap: .4rem;
+      margin: 0;
+      padding: .25rem;
+      background: var(--surface2);
+      border-radius: 12px;
+    }
+    .page-tabs button {
+      border: 0;
+      background: transparent;
+      font: inherit;
+      font-weight: 700;
+      padding: .5rem .8rem;
+      border-radius: 9px;
+      cursor: pointer;
+      color: var(--muted);
+    }
+    .page-tabs button[aria-selected="true"] {
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: var(--shadow);
+    }
+    .video-wrap {
+      position: relative;
+      background: #1c2421;
+      border-radius: 12px;
+      overflow: hidden;
+      aspect-ratio: 16 / 9;
+    }
+    video { width: 100%; height: 100%; display: block; }
+    video::cue { color: transparent; background: transparent; }
+    .sa-caption-overlay {
+      position: absolute;
+      left: 4%;
+      right: 4%;
+      bottom: 12%;
+      z-index: 2;
+      pointer-events: none;
+      text-align: center;
+    }
+    .sa-caption-overlay p {
+      display: block;
+      margin: 0.12rem auto;
+      padding: 0.28rem 0.65rem;
+      max-width: 42rem;
+      border-radius: 8px;
+      background: rgba(12, 18, 16, 0.82);
+      color: #f3efe6;
+      line-height: 1.35;
+      font-size: clamp(0.78rem, 1.7vw, 1.05rem);
+      overflow-wrap: anywhere;
+    }
+    .sa-caption-overlay .sa-cap-zh {
+      display: block;
+      color: #d7efe6;
+      font-size: clamp(0.74rem, 1.6vw, 1rem);
+    }
+  </style>
+</head>
+<body>
+  <h1>Lab 07 — simulated annealing floorplan</h1>
+  <p class="lead">Captions from <code>transcript-sa-en.md</code> and <code>transcript-sa-zh.md</code>. Pick the clip, then English, 中文, or both.</p>
+
+  <div class="lang-row">
+    <p class="row-label">Clip</p>
+    <div class="page-tabs" role="tablist" aria-label="Clip">
+      <button type="button" data-clip="short" aria-selected="true">Short (~2:38)</button>
+      <button type="button" data-clip="full" aria-selected="false">Full (~4:46)</button>
+      <button type="button" data-clip="combined" aria-selected="false">Combined (~7:23)</button>
+    </div>
+  </div>
+  <div class="lang-row">
+    <p class="row-label">Captions</p>
+    <div class="page-tabs" role="tablist" aria-label="Captions">
+      <button type="button" data-cap="off" aria-selected="false">Off</button>
+      <button type="button" data-cap="en" aria-selected="true">English</button>
+      <button type="button" data-cap="zh" aria-selected="false">中文</button>
+      <button type="button" data-cap="bi" aria-selected="false">EN + 中文</button>
+    </div>
+  </div>
+
+  <div class="video-wrap">
+    <video id="sa-video" controls preload="metadata" playsinline crossorigin="anonymous">
+      <source src="simulated_annealing_floorplan-short.mp4" type="video/mp4">
+    </video>
+    <div class="sa-caption-overlay" id="sa-overlay" aria-live="polite"></div>
+  </div>
+
+  <script>
+    const CLIPS = {
+      short: {
+        src: "simulated_annealing_floorplan-short.mp4",
+        en: "captions/sa-short-en.vtt",
+        zh: "captions/sa-short-zh.vtt",
+      },
+      full: {
+        src: "simulated_annealing_floorplan-full.mp4",
+        en: "captions/sa-full-en.vtt",
+        zh: "captions/sa-full-zh.vtt",
+      },
+      combined: {
+        src: "simulated_annealing_floorplan.mp4",
+        en: "captions/sa-combined-en.vtt",
+        zh: "captions/sa-combined-zh.vtt",
+      },
+    };
+
+    const video = document.getElementById("sa-video");
+    const overlay = document.getElementById("sa-overlay");
+    let clip = "short";
+    let cap = "en";
+    let cuesEn = [];
+    let cuesZh = [];
+
+    function parseTs(raw) {
+      const p = String(raw).trim().replace(",", ".").split(":");
+      return Number(p[0]) * 3600 + Number(p[1]) * 60 + Number(p[2]);
+    }
+
+    function parseWebVtt(text) {
+      const out = [];
+      for (const block of String(text).replace(/\r/g, "").split(/\n\n+/)) {
+        const lines = block.split("\n").filter((l) => l.trim() && !/^WEBVTT/i.test(l) && !/^\d+$/.test(l.trim()));
+        const timing = lines.find((l) => l.includes("-->"));
+        if (!timing) continue;
+        const [startRaw, rest] = timing.split("-->");
+        const body = lines.slice(lines.indexOf(timing) + 1).join("\n").trim();
+        if (!body) continue;
+        out.push({
+          start: parseTs(startRaw),
+          end: parseTs(rest.trim().split(/\s+/)[0]),
+          text: body,
+        });
+      }
+      return out;
+    }
+
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    function isZh(line) {
+      return /[\u4e00-\u9fff]/.test(line);
+    }
+
+    function linesOf(body, lang) {
+      const lines = String(body || "").split("\n").map((s) => s.trim()).filter(Boolean);
+      if (lang === "en") return lines.filter((l) => !isZh(l));
+      if (lang === "zh") return lines.filter(isZh);
+      return lines;
+    }
+
+    function cueAt(cues, t) {
+      const hit = cues.find((c) => t >= c.start && t < c.end);
+      return hit ? hit.text : "";
+    }
+
+    function render(enText, zhText) {
+      if (cap === "off") {
+        overlay.hidden = true;
+        overlay.innerHTML = "";
+        return;
+      }
+      const en = linesOf(enText, "en").map(esc).join("<br>");
+      const zh = linesOf(zhText, "zh").map(esc).join("<br>");
+      const parts = [];
+      if ((cap === "en" || cap === "bi") && en) parts.push(`<p class="sa-cap-en">${en}</p>`);
+      if ((cap === "zh" || cap === "bi") && zh) parts.push(`<p class="sa-cap-zh">${zh}</p>`);
+      overlay.hidden = !parts.length;
+      overlay.innerHTML = parts.join("");
+    }
+
+    function paint() {
+      const t = video.currentTime || 0;
+      render(cueAt(cuesEn, t), cueAt(cuesZh, t));
+    }
+
+    async function fetchCues(url) {
+      const res = await fetch(url);
+      return parseWebVtt(await res.text());
+    }
+
+    async function loadCues() {
+      const spec = CLIPS[clip];
+      cuesEn = await fetchCues(spec.en);
+      cuesZh = await fetchCues(spec.zh);
+      paint();
+    }
+
+    function loadClip(next) {
+      clip = next;
+      const spec = CLIPS[clip];
+      const wasPaused = video.paused;
+      video.innerHTML = `<source src="${spec.src}" type="video/mp4">`;
+      video.load();
+      video.currentTime = 0;
+      if (!wasPaused) video.play().catch(() => {});
+      loadCues();
+    }
+
+    document.querySelectorAll("[data-clip]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("[data-clip]").forEach((b) => b.setAttribute("aria-selected", String(b === btn)));
+        loadClip(btn.getAttribute("data-clip"));
+      });
+    });
+
+    document.querySelectorAll("[data-cap]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        cap = btn.getAttribute("data-cap");
+        document.querySelectorAll("[data-cap]").forEach((b) => b.setAttribute("aria-selected", String(b === btn)));
+        paint();
+      });
+    });
+
+    video.addEventListener("timeupdate", paint);
+    video.addEventListener("seeked", paint);
+    loadCues();
+  </script>
+</body>
+</html>

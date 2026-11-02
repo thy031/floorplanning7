@@ -1,0 +1,111 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:08.600
+How do you arrange rectangular circuit blocks inside a tight chip boundary perfectly, without getting trapped in overlapping chaos or bad local guesses?
+怎样把矩形电路模块严丝合缝地排进很紧的芯片轮廓，还不陷入重叠混乱或糟糕的局部猜测？
+
+2
+00:00:08.600 --> 00:00:11.000
+That’s simulated annealing floorplan search.
+这就是模拟退火布局规划搜索。
+
+3
+00:00:11.000 --> 00:00:15.000
+Take this toy floorplanning layout with modules A through E.
+看这个玩具布局规划：模块 A 到 E。
+
+4
+00:00:15.000 --> 00:00:24.900
+To separate great floorplans from invalid layouts, we define a cost function that heavily penalizes illegality.
+为了把好的布局规划和非法布局分开，我们定义一个对非法性重罚的代价函数。
+
+5
+00:00:24.900 --> 00:00:33.000
+Our cost model adds a massive 1,000-point penalty tax whenever a packing is illegal.
+只要装箱非法，代价模型就加上 1000 分的巨额罚金。
+
+6
+00:00:33.000 --> 00:00:36.000
+The energy landscape: bad seed versus golden packing.
+能量地形：坏种子对黄金合法解。
+
+7
+00:00:36.000 --> 00:00:43.800
+The bad overflow seed sits at a cost of about 1,044, dominated almost entirely by that 1,000-point penalty tax. But here is the goal.
+溢出坏种子的代价约 1044，几乎全是那 1000 分罚金。但目标就在这里。
+
+8
+00:00:43.800 --> 00:00:53.000
+The golden legal packing drops below the penalty floor to just 36, consisting purely of deadspace and a small wirelength proxy with zero illegality tax.
+黄金合法解掉到罚金地板以下，只剩 36，纯空白加一点线长代理，非法税为零。
+
+9
+00:00:53.000 --> 00:00:59.545
+Annealing must navigate this steep energy landscape to move from illegal chaos to legal perfection.
+模拟退火必须走过这片陡峭的能量地形，从非法混乱走到合法完美。
+
+10
+00:00:59.545 --> 00:01:03.036
+Execution loop and the Metropolis criterion.
+执行循环与 Metropolis 准则。
+
+11
+00:01:03.036 --> 00:01:05.873
+So how does annealing find the global optimum?
+退火怎样找全局最优？
+
+12
+00:01:05.873 --> 00:01:17.436
+In the pseudocode execution loop, the algorithm proposes neighbor moves, such as an saSwap that exchanges module origin coordinates, and evaluates them using the Metropolis criterion.
+伪代码循环里，算法提出邻域动作，例如用 saSwap 交换模块原点坐标，再用 Metropolis 准则评估。
+
+13
+00:01:17.436 --> 00:01:29.000
+At high initial temperatures T, worsening moves are accepted with probability P = e^(-Δ C / T), allowing the search to escape bad local seeds.
+初始温度 T 很高时，变差的动作仍以概率 P = e^(-ΔC / T) 被接受，搜索才能逃出糟糕的局部种子。
+
+14
+00:01:29.000 --> 00:01:38.000
+As the temperature cools down, cost falls below 1,000 and legality flips to true — exactly what a proper cooling schedule should prefer.
+温度降下来以后，代价落到 1000 以下，合法性翻成 true——合格的降温日程就该这样。
+
+15
+00:01:38.000 --> 00:01:42.216
+Representation and topology edits.
+表示与拓扑编辑。
+
+16
+00:01:42.216 --> 00:01:46.667
+But here is the friction: annealing is only as good as its move set.
+摩擦在这里：模拟退火只和它的动作集一样好。
+
+17
+00:01:46.667 --> 00:02:04.000
+Simple coordinate swapping serves as a starting point, but pairing annealing with B*-trees, sequence pairs, or soft-module aspect-ratio edits — like reshaping module A from 3×2 to 2×3 — unlocks true structural flexibility in advanced VLSI layouts.
+简单交换坐标只是起点；把它和 B*-树、序列对，或软模块长宽比编辑（例如把模块 A 从 3×2 改成 2×3）配在一起，才能在进阶 VLSI 布局里得到真正的结构自由度。
+
+18
+00:02:04.000 --> 00:02:12.611
+In your implementation, watch out for these common traps: optimizing deadspace while accepting illegal states without penalty:
+实现时小心这些常见陷阱：只优化空白却接受没有罚金的非法状态；
+
+19
+00:02:12.611 --> 00:02:17.889
+forgetting to rescore and re-evaluate placement cost immediately after a swap
+交换之后忘记立刻重算、重评放置代价；
+
+20
+00:02:17.889 --> 00:02:24.000
+cooling so fast (quenching) that you never escape the initial bad seed.
+降温过快（淬火），永远逃不出最初的坏种子。
+
+21
+00:02:24.000 --> 00:02:25.994
+Now it’s your turn in the lab.
+现在到实验。
+
+22
+00:02:25.994 --> 00:02:37.560
+Open simulated-annealing-fp, demonstrate one improve step from bad to golden, match the starter metrics, take the quiz, and report your final parts, cost, and legality.
+打开 simulated-annealing-fp，演示一次从坏到黄金的改进步，对齐入门指标，做测验，并报告最终划分、代价和合法性。
